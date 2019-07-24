@@ -59,7 +59,7 @@ class MyDataset:
         return sample
     
     def _preprocess_sample(self, sample):
-        preprocess = lambda x:  tf.cast(x, tf.float32) / 127.0 - 1.0
+        preprocess = lambda x:  tf.cast(x, tf.float32) * 2 / 255. - 1.0
         sample['image'] = preprocess(sample['image'])
         return [sample['image'], 
                 tf.one_hot(tf.reshape(sample['label'], shape=(self.shape[0], self.shape[1])), 
@@ -67,12 +67,12 @@ class MyDataset:
     
     def _augment_sample(self, sample):
         if self.should_augment:
-            sample['image'], sample['label'] = augmentation.flip_randomly_left_right_image_with_annotation(
-                sample['image'],
-                sample['label']
-            )
+            # sample['image'], sample['label'] = augmentation.flip_randomly_left_right_image_with_annotation(
+            #     sample['image'],
+            #     sample['label']
+            # )
             
-            # sample['image'] = tf.image.random_brightness(sample['image'], 0.1)
+            sample['image'] = tf.image.random_brightness(sample['image'], 0.05)
 
             # sample['image'] = augmentation.distort_randomly_image_color(sample['image'])
 
