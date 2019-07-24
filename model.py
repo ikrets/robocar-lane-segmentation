@@ -15,7 +15,7 @@ def mobilenet_backbone(input_tensor, depth_multiplier,
                                                        final_endpoint='layer_18')
 
     net = endpoints['layer_18']
-    return net
+    return net, endpoints
 
 
 def load_mobilenet_weights(sess, checkpoint):
@@ -40,11 +40,16 @@ def segmentation_head(input_tensor, net, is_training, weight_decay, dropout):
             branch_2 = tf.contrib.slim.conv2d(net, 256, [1, 1], scope='aspp0', activation_fn=tf.nn.relu6)
 
             out = tf.concat([branch_1, branch_2], axis=-1)
-            out = tf.contrib.slim.conv2d(out, 256, [1, 1], scope='concat_projection', activation_fn=tf.nn.relu6)
-            out = tf.contrib.slim.dropout(out, keep_prob=1 - dropout, is_training=is_training)
+            concat_project = tf.contrib.slim.conv2d(out, 256, [1, 1], scope='concat_projection',
+                                                    activation_fn=tf.nn.relu6)
+            if not is_training:
+                out = tf.contrib.slim.dropout(concat_project, keep_prob=1 - dropout, is_training=is_training)
+            else:
+                out = concat_project
 
-            out = tf.contrib.slim.conv2d(out, 2, [1, 1], scope='final_layer', normalizer_fn=None, activation_fn=None,
-                                         biases_initializer=tf.contrib.slim.initializers.xavier_initializer())
-            out = tf.image.resize_bilinear(out, (input_tensor.shape[1], input_tensor.shape[2]), align_corners=True)
+            final_conv = tf.contrib.slim.conv2d(out, 2, [1, 1], scope='final_layer', normalizer_fn=None, activation_fn=None,
+                                            biases_initializer=tf.contrib.slim.initializers.xavier_initializer())
+            out = tf.image.resize_bilinear(resize, (input_tensor.shape[1], input_tensor.shape[2]), align_corners=True)
 
-            return out
+            return out, {'branch_1': branch_1, 'branch_2': branch_2, 'concat_project': concat_project,
+                         'final_conv': final_conv, 'resize': out}
