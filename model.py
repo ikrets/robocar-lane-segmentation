@@ -47,7 +47,7 @@ def segmentation_head(input_tensor, net, is_training, weight_decay, dropout):
             else:
                 out = concat_project
 
-            final_conv = tf.contrib.slim.conv2d(out, 2, [1, 1], scope='final_layer', normalizer_fn=None,
+            final_conv = tf.contrib.slim.conv2d(out, 1, [1, 1], scope='final_layer', normalizer_fn=None,
                                                 activation_fn=None,
                                                 biases_initializer=tf.contrib.slim.initializers.xavier_initializer())
             out = tf.image.resize_bilinear(final_conv, (input_tensor.shape[1], input_tensor.shape[2]),
