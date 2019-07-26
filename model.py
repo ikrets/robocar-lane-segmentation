@@ -30,7 +30,6 @@ def segmentation_head(input_tensor, net, is_training, weight_decay, dropout):
                                                                weight_decay=weight_decay)):
         with tf.contrib.slim.arg_scope([tf.contrib.slim.conv2d],
                                        normalizer_params={'scale': True, 'center': True, 'epsilon': 1e-5,
-                                                          'fused': False,
                                                           'decay': 0.9,
                                                           'updates_collections': None}):
             feature_map_size = tf.shape(net)
