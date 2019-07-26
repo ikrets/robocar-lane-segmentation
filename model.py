@@ -7,7 +7,7 @@ def mobilenet_backbone(input_tensor, depth_multiplier,
     with tf.contrib.slim.arg_scope(mobilenet_v2.training_scope(is_training=is_training, weight_decay=weight_decay)):
         with tf.contrib.slim.arg_scope([tf.contrib.slim.conv2d],
                                        normalizer_params={'scale': True, 'center': True, 'epsilon': 1e-3,
-                                                          'decay': 0.95,
+                                                          'decay': 0.9,
                                                           'updates_collections': None}):
             logits, endpoints = mobilenet_v2.mobilenet(input_tensor=input_tensor,
                                                        num_classes=2,
@@ -31,7 +31,7 @@ def segmentation_head(input_tensor, net, is_training, weight_decay, dropout):
         with tf.contrib.slim.arg_scope([tf.contrib.slim.conv2d],
                                        normalizer_params={'scale': True, 'center': True, 'epsilon': 1e-5,
                                                           'fused': False,
-                                                          'decay': 0.95,
+                                                          'decay': 0.9,
                                                           'updates_collections': None}):
             feature_map_size = tf.shape(net)
             branch_1 = tf.reduce_mean(net, [1, 2], name='image_level_global_pool', keepdims=True)
