@@ -44,10 +44,7 @@ def segmentation_head(input_tensor, net, is_training, weight_decay, dropout):
             out = tf.concat([branch_1, branch_2], axis=-1)
             concat_project = tf.contrib.slim.conv2d(out, 256, [1, 1], scope='concat_projection',
                                                     activation_fn=tf.nn.relu6)
-            if not is_training:
-                out = tf.contrib.slim.dropout(concat_project, keep_prob=1 - dropout, is_training=is_training)
-            else:
-                out = concat_project
+            out = tf.contrib.slim.dropout(concat_project, keep_prob=1 - dropout, is_training=is_training)
 
             final_conv = tf.contrib.slim.conv2d(out, 1, [1, 1], scope='final_layer', normalizer_fn=None,
                                                 activation_fn=None,
