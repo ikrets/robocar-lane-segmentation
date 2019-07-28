@@ -3,11 +3,11 @@ from slim.nets.mobilenet import mobilenet_v2
 
 
 def mobilenet_backbone(input_tensor, depth_multiplier,
-                       output_stride, is_training, weight_decay):
+                       output_stride, is_training, weight_decay, bn_decay):
     with tf.contrib.slim.arg_scope(mobilenet_v2.training_scope(is_training=is_training, weight_decay=weight_decay)):
         with tf.contrib.slim.arg_scope([tf.contrib.slim.conv2d],
-                                       normalizer_params={'scale': True, 'center': True, 'epsilon': 1e-3,
-                                                          'decay': 0.9,
+                                       normalizer_params={'scale': True, 'center': True, 'epsilon': 1e-6,
+                                                          'decay': bn_decay,
                                                           'updates_collections': None}):
             logits, endpoints = mobilenet_v2.mobilenet(input_tensor=input_tensor,
                                                        num_classes=2,
@@ -25,12 +25,12 @@ def load_mobilenet_weights(sess, checkpoint):
     saver.restore(sess, checkpoint)
 
 
-def segmentation_head(input_tensor, net, is_training, weight_decay, dropout):
+def segmentation_head(input_tensor, net, is_training, weight_decay, bn_decay):
     with tf.contrib.slim.arg_scope(mobilenet_v2.training_scope(is_training=is_training,
                                                                weight_decay=weight_decay)):
         with tf.contrib.slim.arg_scope([tf.contrib.slim.conv2d],
-                                       normalizer_params={'scale': True, 'center': True, 'epsilon': 1e-5,
-                                                          'decay': 0.9,
+                                       normalizer_params={'scale': True, 'center': True, 'epsilon': 1e-6,
+                                                          'decay': bn_decay,
                                                           'updates_collections': None}):
             feature_map_size = tf.shape(net)
             branch_1 = tf.reduce_mean(net, [1, 2], name='image_level_global_pool', keepdims=True)
@@ -44,9 +44,8 @@ def segmentation_head(input_tensor, net, is_training, weight_decay, dropout):
             out = tf.concat([branch_1, branch_2], axis=-1)
             concat_project = tf.contrib.slim.conv2d(out, 256, [1, 1], scope='concat_projection',
                                                     activation_fn=tf.nn.relu6)
-            out = tf.contrib.slim.dropout(concat_project, keep_prob=1 - dropout, is_training=is_training)
 
-            final_conv = tf.contrib.slim.conv2d(out, 1, [1, 1], scope='final_layer', normalizer_fn=None,
+            final_conv = tf.contrib.slim.conv2d(concat_project, 1, [1, 1], scope='final_layer', normalizer_fn=None,
                                                 activation_fn=None,
                                                 biases_initializer=tf.contrib.slim.initializers.xavier_initializer())
             out = tf.image.resize_bilinear(final_conv, (input_tensor.shape[1], input_tensor.shape[2]),
