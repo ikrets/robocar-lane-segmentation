@@ -6,9 +6,9 @@ def mobilenet_backbone(input_tensor, depth_multiplier,
                        output_stride, is_training, weight_decay, bn_decay):
     with tf.contrib.slim.arg_scope(mobilenet_v2.training_scope(is_training=is_training, weight_decay=weight_decay)):
         with tf.contrib.slim.arg_scope([tf.contrib.slim.conv2d],
-                                       normalizer_params={'scale': True, 'center': True, 'epsilon': 1e-6,
+                                       normalizer_params={'scale': True, 'center': True, 'epsilon': 1e-3,
                                                           'decay': bn_decay,
-                                                          'updates_collections': None}):
+                                                          'fused': False}):
             logits, endpoints = mobilenet_v2.mobilenet(input_tensor=input_tensor,
                                                        num_classes=2,
                                                        depth_multiplier=depth_multiplier,
@@ -29,9 +29,9 @@ def segmentation_head(input_tensor, net, is_training, weight_decay, bn_decay):
     with tf.contrib.slim.arg_scope(mobilenet_v2.training_scope(is_training=is_training,
                                                                weight_decay=weight_decay)):
         with tf.contrib.slim.arg_scope([tf.contrib.slim.conv2d],
-                                       normalizer_params={'scale': True, 'center': True, 'epsilon': 1e-6,
+                                       normalizer_params={'scale': True, 'center': True, 'epsilon': 1e-5,
                                                           'decay': bn_decay,
-                                                          'updates_collections': None}):
+                                                          'fused': False}):
             feature_map_size = tf.shape(net)
             branch_1 = tf.reduce_mean(net, [1, 2], name='image_level_global_pool', keepdims=True)
             branch_1 = tf.contrib.slim.conv2d(branch_1, 256, [1, 1], scope="image_level_conv_1x1",
