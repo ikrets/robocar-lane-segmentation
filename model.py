@@ -32,24 +32,23 @@ def segmentation_head(input_tensor, net, is_training, weight_decay, bn_decay):
                                        normalizer_params={'scale': True, 'center': True, 'epsilon': 1e-5,
                                                           'decay': bn_decay,
                                                           'fused': False}):
-            feature_map_size = tf.shape(net)
-            branch_1 = tf.reduce_mean(net, [1, 2], name='image_level_global_pool', keepdims=True)
-            branch_1 = tf.contrib.slim.conv2d(branch_1, 256, [1, 1], scope="image_level_conv_1x1",
-                                              activation_fn=tf.nn.relu6)
-            branch_1 = tf.image.resize_bilinear(branch_1, (feature_map_size[1], feature_map_size[2]),
-                                                align_corners=True)
+            # feature_map_size = tf.shape(net)
+            # branch_1 = tf.reduce_mean(net, [1, 2], name='image_level_global_pool', keepdims=True)
+            # branch_1 = tf.contrib.slim.conv2d(branch_1, 256, [1, 1], scope="image_level_conv_1x1",
+            #                                   activation_fn=tf.nn.relu6)
+            # branch_1 = tf.image.resize_bilinear(branch_1, (feature_map_size[1], feature_map_size[2]),
+            #                                     align_corners=True)
 
             branch_2 = tf.contrib.slim.conv2d(net, 256, [1, 1], scope='aspp0', activation_fn=tf.nn.relu6)
 
-            out = tf.concat([branch_1, branch_2], axis=-1)
-            concat_project = tf.contrib.slim.conv2d(out, 256, [1, 1], scope='concat_projection',
-                                                    activation_fn=tf.nn.relu6)
+            # out = tf.concat([branch_1, branch_2], axis=-1)
+            # concat_project = tf.contrib.slim.conv2d(out, 256, [1, 1], scope='concat_projection',
+            #                                         activation_fn=tf.nn.relu6)
 
-            final_conv = tf.contrib.slim.conv2d(concat_project, 1, [1, 1], scope='final_layer', normalizer_fn=None,
+            final_conv = tf.contrib.slim.conv2d(branch_2, 1, [1, 1], scope='final_layer', normalizer_fn=None,
                                                 activation_fn=None,
                                                 biases_initializer=tf.contrib.slim.initializers.xavier_initializer())
             out = tf.image.resize_bilinear(final_conv, (input_tensor.shape[1], input_tensor.shape[2]),
                                            align_corners=True)
 
-            return out, {'branch_1': branch_1, 'branch_2': branch_2, 'concat_project': concat_project,
-                         'final_conv': final_conv, 'resize': out}
+            return out, {'branch_2': branch_2, 'final_conv': final_conv, 'resize': out}
